@@ -1,7 +1,7 @@
 import numpy as np
 import pandas
 import os
-from mistura import mistura, softmax
+from mistura_2 import mistura, softmax
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%  Mistura de Especialista  %%%%%%%%%%%%%%%%%%%%%%
 # %%%%%Rede Especialista - Perceptron%%%%%%%%%%%%%%%%%%%
@@ -66,12 +66,10 @@ if __name__ == "__main__":
     Yv = Y[train_size:train_size+test_size,:]
 
 
+    m = 4
+    hidden_units = 7
 
-    print(Xtr.shape)
-    print(Xv.shape)
-    m = 6
-
-    me = mistura(Xtr, Ytr, m)
+    me = mistura(Xtr, Ytr, m, hidden_units)
 
 
 
@@ -86,14 +84,19 @@ if __name__ == "__main__":
     ne = ne + 1
 
     Wg = me['gating']
-    W = me['expert_W']
+    W1 = me['expert_W1']
+    W2 = me['expert_W2']
     var = me['expert_var']
 
-    ##calcula a saida
+    ##calcula saida
     Yg = softmax(np.dot(Xv, Wg.T))
     Ye = {}
     for i in range(m):
-        Ye[i] = np.dot(Xv, W[i].T)
+        Z1 = np.dot(Xv, W1[i].T)
+        A1 = (np.exp(Z1) - np.exp(-Z1)) / (np.exp(Z1) + np.exp(-Z1))
+        ##add bias
+        A1 = np.concatenate((A1, np.ones((Nv, 1))), axis=1)
+        Ye[i] = np.dot(A1, W2[i].T)
     Ym = np.zeros((Nv, ns))
     for i in range(m):
         Yge = Yg[:, i].reshape(Nv, 1)
@@ -111,7 +114,7 @@ if __name__ == "__main__":
 
     erro_medio = np.sqrt(np.square(np.sum(Yv - Ym))/Nv)
 
-    print (likelihood)
+    print(likelihood)
 
     errov = Ym - Yv
     EQMv = 1 / Nv * np.sum(errov * errov)
