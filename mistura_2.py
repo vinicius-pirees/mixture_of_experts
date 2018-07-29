@@ -1,4 +1,5 @@
 import numpy as np
+from utils import softmax
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%  Mistura de Especialista  %%%%%%%%%%%%%%%%%%%%%%
@@ -64,7 +65,7 @@ def mistura(Xtr, Ytr, m, hidden_units):
     likelihood = np.sum(np.log(np.sum(Yg * Py, axis=1, keepdims=True)))
     likelihood_ant = 0
     nit = 0
-    nitmax = 100
+    nitmax = 20
 
     while np.abs(likelihood - likelihood_ant) > 1e-3 and nit < nitmax:
         nit = nit + 1
@@ -109,11 +110,6 @@ def mistura(Xtr, Ytr, m, hidden_units):
 
     return me
 
-def softmax(Z):
-    Z_exp = np.exp(Z)
-    Z_sum = np.sum(Z_exp, axis = 1, keepdims = True)
-    return Z_exp/Z_sum
-
 
 def maximiza_gating(Wg, Xtr, m, h):
     N = Xtr.shape[0]
@@ -123,7 +119,7 @@ def maximiza_gating(Wg, Xtr, m, h):
     grad = np.dot((h - Yg).T, (Xtr / N))
     dir = grad
     nit = 0
-    nitmax = 30000
+    nitmax = 10000
     alfa = 0.1
 
     while np.linalg.norm(grad) > 1e-5 and nit < nitmax:
@@ -156,7 +152,7 @@ def maximiza_expert(W1, W2, var, Xtr, Ytr, h):
     dW1 = 1/N * np.dot((np.dot(dC_dZ2, W2[:,:nh]) * (1-(A1[:,:nh] * A1[:,:nh]))).T , Xtr)
 
     nit = 0
-    nitmax = 30000
+    nitmax = 10000
     alfa = 0.1
 
     while np.linalg.norm(dW2) > 1e-5 and nit < nitmax:

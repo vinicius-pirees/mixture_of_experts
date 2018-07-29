@@ -1,7 +1,7 @@
 import numpy as np
 import pandas
 import os
-from mistura_2 import mistura
+from mistura_2_0_1 import mistura
 from utils import softmax, series_to_supervised
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -22,7 +22,7 @@ series = pandas.read_csv(filename,  header=None)
 
 if __name__ == "__main__":
 
-    D = series_to_supervised(series, 5).values
+    D = series_to_supervised(series, 21).values
 
     X = D[:,0:-1]
     Y = D[:,-1].reshape(X.shape[0],1)
@@ -35,10 +35,9 @@ if __name__ == "__main__":
     Yv = Y[train_size:train_size+test_size,:]
 
 
-    m = 5
-    hidden_units = 7
+    m = 6
 
-    me = mistura(Xtr, Ytr, m, hidden_units)
+    me = mistura(Xtr, Ytr, m)
 
     ## Teste
 
@@ -78,8 +77,6 @@ if __name__ == "__main__":
             Py[j, i] = np.exp(np.dot(-diff, diff.T) / (2 * var[i]))
 
     likelihood = np.sum(np.log(np.sum(Yg * Py, axis=1, keepdims=True)))
-
-    erro_medio = np.sqrt(np.square(np.sum(Yv - Ym))/Nv)
 
     print(likelihood)
 

@@ -1,25 +1,15 @@
 import numpy as np
 from utils import softmax, dirac_delta
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# %%%%%  Mistura de Especialista  %%%%%%%%%%%%%%%%%%%%%%
-# %%%%%Rede Especialista - Perceptron%%%%%%%%%%%%%%%%%%%
-# %%%%%Rede Gating - Perceptron%%%%%%%%%%%%%%%%%%%%%%%%%
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-# Xtr - entrada de treinamento
-# Ytr - saida de treinamento
-# Wg - rede gating
-# W - especialistas
-
-
-
-def mistura(Xtr, Ytr, m, hidden_units):
+def mistura(Xtr, Ytr, m):
     Ntr = Xtr.shape[0]
     ne = Xtr.shape[1]
     ns = Ytr.shape[1]
-    nh = hidden_units
+    nh_gating = 5
+    nh1 = 9
+    nh2 = 7
+    nh3 = 3
+    nh4 = 4
 
 
 
@@ -28,17 +18,30 @@ def mistura(Xtr, Ytr, m, hidden_units):
     ne = ne + 1
 
     ## Inicializa rede gating
-    Wg = np.random.rand(nh, ne)
-    Wg2 = np.random.rand(m, nh+1)
+    Wg = np.random.rand(nh_gating, ne)
+    Wg2 = np.random.rand(m, nh_gating + 1)
 
     # Inicializa especialistas
     W1 = {}
     W2 = {}
     var = list(range(m))
-    for i in range(m):
-        W1[i] = np.random.rand(nh, ne)
-        W2[i] = np.random.rand(ns, nh+1)
+    for i in range(2):
+        W1[i] = np.random.rand(nh1, ne)
+        W2[i] = np.random.rand(ns, nh1+1)
         var[i] = 1
+
+    for i in range(2,4):
+        W1[i] = np.random.rand(nh2, ne)
+        W2[i] = np.random.rand(ns, nh2+1)
+        var[i] = 1
+
+    W1[4] = np.random.rand(nh3, ne)
+    W2[4] = np.random.rand(ns, nh3 + 1)
+    var[4] = 1
+
+    W1[5] = np.random.rand(nh4, ne)
+    W2[5] = np.random.rand(ns, nh4 + 1)
+    var[5] = 1
 
     ##calcula saida
     Zg1 = np.dot(Xtr, Wg.T)
@@ -72,7 +75,7 @@ def mistura(Xtr, Ytr, m, hidden_units):
     likelihood = np.sum(np.log(np.sum(Yg * Py, axis=1, keepdims=True)))
     likelihood_ant = 0
     nit = 0
-    nitmax = 10
+    nitmax = 20
 
     while np.abs(likelihood - likelihood_ant) > 1e-3 and nit < nitmax:
         nit = nit + 1
@@ -80,7 +83,7 @@ def mistura(Xtr, Ytr, m, hidden_units):
         haux = Yg * Py
         h = haux / np.dot(np.sum(haux, axis=1, keepdims=True), np.ones((1, m)))
         ##Passo M
-        Wg,Wg2 = maximiza_gating(Wg, Wg2, Xtr, m, h)
+        Wg, Wg2 = maximiza_gating(Wg, Wg2, Xtr, m, h)
         for i in range(m):
             W1[i], W2[i], var[i] = maximiza_expert(W1[i], W2[i],var[i], Xtr, Ytr, h[:, i].reshape(Ntr, 1))
         likelihood_ant = likelihood
@@ -116,12 +119,18 @@ def mistura(Xtr, Ytr, m, hidden_units):
 
         likelihood = np.sum(np.log(np.sum(Yg * Py, axis=1, keepdims=True)))
 
+    errov = Ym - Ytr
+    EQMv = 1 / Ntr * np.sum(errov * errov)
+
+
     me = {}
     me['gating_Wg'] = Wg
     me['gating_Wg2'] = Wg2
     me['expert_W1'] = W1
     me['expert_W2'] = W2
     me['expert_var'] = var
+    me['last_error'] = EQMv
+    me['last_likelihood'] = likelihood
 
     return me
 
@@ -156,7 +165,7 @@ def maximiza_gating(Wg, Wg2, Xtr, m, h):
 
 
     nit = 0
-    nitmax = 10000
+    nitmax = 50000
     alfa = 0.1
 
     while np.linalg.norm(dWg2) > 1e-5 and nit < nitmax:
@@ -210,7 +219,7 @@ def maximiza_expert(W1, W2, var, Xtr, Ytr, h):
     dW1 = 1/N * np.dot((np.dot(dC_dZ2, W2[:,:nh]) * (1-(A1[:,:nh] * A1[:,:nh]))).T , Xtr)
 
     nit = 0
-    nitmax = 10000
+    nitmax = 50000
     alfa = 0.1
 
     while np.linalg.norm(dW2) > 1e-5 and nit < nitmax:

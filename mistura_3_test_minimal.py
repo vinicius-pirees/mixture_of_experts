@@ -1,9 +1,6 @@
 import numpy as np
-import pandas
-import os
-from mistura_3 import mistura, softmax
-
-
+from mistura_3 import mistura
+from utils import softmax
 
 
 if __name__ == "__main__":
@@ -58,7 +55,6 @@ if __name__ == "__main__":
 
 
     ## Teste
-
     Ntr = Xtr.shape[0]
     ne = Xtr.shape[1]
     ns = Ytr.shape[1]

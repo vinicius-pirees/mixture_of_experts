@@ -1,5 +1,5 @@
 import numpy as np
-from mistura_2 import mistura
+from mistura_2_2 import mistura
 from utils import softmax
 
 
@@ -48,20 +48,18 @@ if __name__ == "__main__":
                     [0.3774754]])
 
 
-    m = 4
-    hidden_units = 3
+    m = 6
 
-    me = mistura(Xtr, Ytr, m, hidden_units)
-
+    me = mistura(Xtr, Ytr, m)
 
     ## Teste
 
-    Ntr = Xtr.shape[0]
+    N = Xtr.shape[0]
     ne = Xtr.shape[1]
     ns = Ytr.shape[1]
 
     ##add bias
-    Xtr = np.concatenate((Xtr, np.ones((Ntr, 1))), axis=1)
+    Xtr = np.concatenate((Xtr, np.ones((N, 1))), axis=1)
     ne = ne + 1
 
     Wg = me['gating']
@@ -71,34 +69,38 @@ if __name__ == "__main__":
 
     ##calcula saida
     Yg = softmax(np.dot(Xtr, Wg.T))
+
     Ye = {}
-    for i in range(m):
+    for i in range(4):
         Z1 = np.dot(Xtr, W1[i].T)
         A1 = (np.exp(Z1) - np.exp(-Z1)) / (np.exp(Z1) + np.exp(-Z1))
         ##add bias
-        A1 = np.concatenate((A1, np.ones((Ntr, 1))), axis=1)
+        A1 = np.concatenate((A1, np.ones((N, 1))), axis=1)
         Ye[i] = np.dot(A1, W2[i].T)
-    Ym = np.zeros((Ntr, ns))
+
+    for i in range(4, 6):
+        Ye[i] = np.dot(Xtr, W1[i].T)
+
+    Ym = np.zeros((N, ns))
     for i in range(m):
-        Yge = Yg[:, i].reshape(Ntr, 1)
+        Yge = Yg[:, i].reshape(N, 1)
         Ym = Ym + Ye[i] * Yge
 
     ##calculo da funcao de verossimilhanca
-    Py = np.zeros((Ntr, m))
+    Py = np.zeros((N, m))
     for i in range(m):
         Yaux = Ye[i]
-        for j in range(Ntr):
+        for j in range(N):
             diff = Ytr[j, :] - Yaux[j, :]
             Py[j, i] = np.exp(np.dot(-diff, diff.T) / (2 * var[i]))
 
     likelihood = np.sum(np.log(np.sum(Yg * Py, axis=1, keepdims=True)))
 
-    erro_medio = np.sqrt(np.square(np.sum(Ytr - Ym)) / Ntr)
 
     print (likelihood)
 
     errov = Ym - Ytr
-    EQMv = 1 / Ntr * np.sum(errov * errov)
+    EQMv = 1 / N * np.sum(errov * errov)
 
     print(EQMv)
 

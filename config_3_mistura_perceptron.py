@@ -1,18 +1,5 @@
 import numpy as np
-from utils import softmax
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# %%%%%  Mistura de Especialista  %%%%%%%%%%%%%%%%%%%%%%
-# %%%%%Rede Especialista - Perceptron%%%%%%%%%%%%%%%%%%%
-# %%%%%Rede Gating - Perceptron%%%%%%%%%%%%%%%%%%%%%%%%%
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-# Xtr - entrada de treinamento
-# Ytr - saida de treinamento
-# Wg - rede gating
-# W - especialistas
-
+from utils import softmax, dirac_delta
 
 
 def mistura(Xtr, Ytr, m):
@@ -99,20 +86,44 @@ def mistura(Xtr, Ytr, m):
 def maximiza_gating(Wg, Xtr, m, h):
     N = Xtr.shape[0]
     ne = Xtr.shape[1]
+    ns = m
+
     Yg = softmax(np.dot(Xtr, Wg.T))
 
-    grad = np.dot((h - Yg).T, (Xtr / N))
-    dir = grad
+    dW = np.zeros((ns, ne))
+
+    for i in range(0, ns):
+        w = 0
+        for j in range(0, ns):
+            dC_dAj = (h - Yg)[:, [j]]
+            dAj_dZi = (Yg[:, [i]] * (dirac_delta(i, j) - Yg[:, [j]]))
+            dZi_dWi = Xtr
+            w += np.dot((dC_dAj * dAj_dZi).T, dZi_dWi)
+        dW[[i], :] = w
+
+    dW = 1 / N * dW
+
     nit = 0
-    nitmax = 10000
+    nitmax = 50000
     alfa = 0.1
 
-    while np.linalg.norm(grad) > 1e-5 and nit < nitmax:
+    while np.linalg.norm(dW) > 1e-5 and nit < nitmax:
         nit = nit + 1
-        Wg = Wg + (alfa * dir)
+        Wg = Wg + (alfa * dW)
         Yg = softmax(np.dot(Xtr, Wg.T))
-        grad = np.dot((h - Yg).T, (Xtr / N))
-        dir = grad
+
+        dW = np.zeros((ns, ne))
+
+        for i in range(0, ns):
+            w = 0
+            for j in range(0, ns):
+                dC_dAj = (h - Yg)[:, [j]]
+                dAj_dZi = (Yg[:, [i]] * (dirac_delta(i, j) - Yg[:, [j]]))
+                dZi_dWi = Xtr
+                w += np.dot((dC_dAj * dAj_dZi).T, dZi_dWi)
+            dW[[i], :] = w
+
+        dW = 1 / N * dW
 
     return Wg
 
@@ -126,7 +137,7 @@ def maximiza_expert(W, var, Xtr, Ytr, h):
 
     dir = grad
     nit = 0
-    nitmax = 10000
+    nitmax = 50000
     alfa = 0.1
 
     while np.linalg.norm(grad) > 1e-5 and nit < nitmax:

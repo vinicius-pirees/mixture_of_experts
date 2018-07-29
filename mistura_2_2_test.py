@@ -1,7 +1,7 @@
 import numpy as np
 import pandas
 import os
-from mistura_2 import mistura
+from mistura_2_2 import mistura
 from utils import softmax, series_to_supervised
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -15,6 +15,9 @@ from utils import softmax, series_to_supervised
 # Ytr - saida de treinamento
 # Wg - rede gating
 # W - especialistas
+
+##Especialistas MLP 1 camada oculta
+##Gating - perceptron
 
 filename = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('treinamento.txt'))) + '/treinamento-1.txt'
 series = pandas.read_csv(filename,  header=None)
@@ -35,10 +38,11 @@ if __name__ == "__main__":
     Yv = Y[train_size:train_size+test_size,:]
 
 
-    m = 5
-    hidden_units = 7
+    m = 6
 
-    me = mistura(Xtr, Ytr, m, hidden_units)
+    me = mistura(Xtr, Ytr, m)
+
+    print('\n', me, '\n')
 
     ## Teste
 
@@ -57,13 +61,19 @@ if __name__ == "__main__":
 
     ##calcula saida
     Yg = softmax(np.dot(Xv, Wg.T))
+
     Ye = {}
-    for i in range(m):
+    for i in range(4):
         Z1 = np.dot(Xv, W1[i].T)
-        A1 = (np.exp(Z1) - np.exp(-Z1)) / (np.exp(Z1) + np.exp(-Z1))
+        A1 = (np.exp(Z1) - np.exp(-Z1)) / (np.exp(Z1)+np.exp(-Z1))
         ##add bias
         A1 = np.concatenate((A1, np.ones((Nv, 1))), axis=1)
         Ye[i] = np.dot(A1, W2[i].T)
+
+    for i in range(4,6):
+        Ye[i] = np.dot(Xv, W1[i].T)
+
+
     Ym = np.zeros((Nv, ns))
     for i in range(m):
         Yge = Yg[:, i].reshape(Nv, 1)
@@ -88,7 +98,7 @@ if __name__ == "__main__":
 
     print(EQMv)
 
-    print('\n',me)
+
 
 
 

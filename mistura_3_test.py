@@ -1,9 +1,8 @@
 import numpy as np
 import pandas
 import os
-from mistura_2 import mistura
+from mistura_3 import mistura
 from utils import softmax, series_to_supervised
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%  Mistura de Especialista  %%%%%%%%%%%%%%%%%%%%%%
 # %%%%%Rede Especialista - Perceptron%%%%%%%%%%%%%%%%%%%
@@ -18,7 +17,6 @@ from utils import softmax, series_to_supervised
 
 filename = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('treinamento.txt'))) + '/treinamento-1.txt'
 series = pandas.read_csv(filename,  header=None)
-
 
 if __name__ == "__main__":
 
@@ -40,6 +38,8 @@ if __name__ == "__main__":
 
     me = mistura(Xtr, Ytr, m, hidden_units)
 
+
+
     ## Teste
 
     Nv = Xv.shape[0]
@@ -50,13 +50,21 @@ if __name__ == "__main__":
     Xv = np.concatenate((Xv, np.ones((Nv, 1))), axis=1)
     ne = ne + 1
 
-    Wg = me['gating']
+    Wg = me['gating_Wg']
+    Wg2 = me['gating_Wg2']
     W1 = me['expert_W1']
     W2 = me['expert_W2']
     var = me['expert_var']
 
     ##calcula saida
-    Yg = softmax(np.dot(Xv, Wg.T))
+    Zg1 = np.dot(Xv, Wg.T)
+    ##tanh
+    Ag1 = (np.exp(Zg1) - np.exp(-Zg1)) / (np.exp(Zg1) + np.exp(-Zg1))
+    ##add bias
+    Ag1 = np.concatenate((Ag1, np.ones((Nv, 1))), axis=1)
+    Zg2 = np.dot(Ag1, Wg2.T)
+    Yg = softmax(Zg2)
+
     Ye = {}
     for i in range(m):
         Z1 = np.dot(Xv, W1[i].T)
@@ -69,7 +77,7 @@ if __name__ == "__main__":
         Yge = Yg[:, i].reshape(Nv, 1)
         Ym = Ym + Ye[i] * Yge
 
-    ##calculo da funcao de verossimilhanca
+    ##calculo da verossimilhanca
     Py = np.zeros((Nv, m))
     for i in range(m):
         Yaux = Ye[i]
@@ -79,7 +87,6 @@ if __name__ == "__main__":
 
     likelihood = np.sum(np.log(np.sum(Yg * Py, axis=1, keepdims=True)))
 
-    erro_medio = np.sqrt(np.square(np.sum(Yv - Ym))/Nv)
 
     print(likelihood)
 

@@ -1,7 +1,6 @@
 import numpy as np
-import pandas
-import os
-from mistura import mistura, softmax
+from mistura import mistura
+from utils import softmax
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%  Mistura de Especialista  %%%%%%%%%%%%%%%%%%%%%%
 # %%%%%Rede Especialista - Perceptron%%%%%%%%%%%%%%%%%%%

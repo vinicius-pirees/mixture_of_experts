@@ -1,5 +1,5 @@
 import numpy as np
-from mistura_2 import mistura
+from mistura_2_0_1 import mistura
 from utils import softmax
 
 
@@ -49,9 +49,7 @@ if __name__ == "__main__":
 
 
     m = 4
-    hidden_units = 3
-
-    me = mistura(Xtr, Ytr, m, hidden_units)
+    me = mistura(Xtr, Ytr, m)
 
 
     ## Teste
